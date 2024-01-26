@@ -4,6 +4,7 @@ from controllers.usuario import app as usuario_controller
 from dotenv import load_dotenv
 import os
 
+# Load the enviroment variables
 load_dotenv(".env")
 
 app = Flask(__name__, template_folder="templates")

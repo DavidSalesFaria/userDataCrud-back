@@ -19,17 +19,17 @@ def validate_email(email):
 app = Blueprint("usuario", __name__)
 
 @app.route("/")
-@app.route("/<useremail>")
-def index(useremail=None):
-    #useremail = ""
-    if not useremail:
-        # Is returned an iterator with
-        #  all users
+@app.route("/<id>")
+def index(id=None):
+    # Check if id was provided
+    if not id:
+        # Is returned an iterator with all users
         query = Usuario.query.all()
         # Cast every object into dict
         result = [u.to_dict() for u in query]
     else:
-        query = Usuario.query.where(Usuario.email == useremail)
+        # Get a specific user by id
+        query = Usuario.query.where(Usuario.id == id)
         result = query.first().to_dict()
     
     return Response(response=json.dumps({"status": "success", "data": result}), status=200, content_type="application/json")
@@ -54,10 +54,10 @@ def add():
     return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
 
 
-@app.route("/edit/<useremail>", methods=["PUT", "POST"])
+@app.route("/edit/<id>", methods=["PUT", "POST"])
 def edit(useremail):
-    # Localiza o usuário no banco pelo email
-    usuario = Usuario.query.where(Usuario.email == useremail).first()
+    # Get a specific user by id
+    usuario = Usuario.query.where(Usuario.email == id).first()
     data = request.get_json(force=True)  
     usuario.nome = data["nome"]
     usuario.sobrenome = data["sobrenome"]
@@ -70,33 +70,10 @@ def edit(useremail):
     return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
 
 
-@app.route("/delete/<useremail>", methods=["DELETE", "GET"])
-def delete(useremail):
-    usuario = Usuario.query.where(Usuario.email == useremail).first()
+@app.route("/delete/<id>", methods=["DELETE", "GET"])
+def delete(id):
+    usuario = Usuario.query.where(Usuario.email == id).first()
     db.session.delete(usuario)
     db.session.commit()
     return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
 
-
-@app.route("/getuser/<useremail>", methods=["GET"])
-def getUser(useremail):
-
-    if validate_email(useremail):
-        usuarios = Usuario.query.where(Usuario.email == useremail)
-        usuario = usuarios.first()
-
-        if usuario:
-            usuario = usuario.to_dict()
-        else:
-            usuario = {}
-
-        return Response(response=json.dumps({"status": "success", "data": usuario}), status=200, content_type="application/json")
-    else:
-        return Response(response=json.dumps({"status": "bad request", "data": {}, "message": "The email address is invalid"}), status=400, content_type="application/json")
-
-
-# @app.route("/logout")
-# def logout():
-#     # Remove the username from the session
-#     session.pop("username", None)
-#     return redirect(url_for("index"))

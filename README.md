@@ -36,7 +36,7 @@ Retorna uma lista de todos os usuários.
 **Método:** GET
 
 **Parâmetro:**
-* `useremail` (opcional): Email do usuário
+* `id` (opcional): id do usuário
 
 **Exemplos:**
 
@@ -46,14 +46,14 @@ Retorna uma lista de todos os usuários.
 GET /users/
 ```
 
-### `/<useremail>`
+### `/<id>`
 
 Retorna um usuário específico.
 
 **Método:** GET
 
 **Parâmetro:**
-* `useremail`: Email do usuário
+* `id`: id do usuário
 
 **Exemplo:**
 
@@ -88,7 +88,7 @@ Cria um usuário com os dados especificados no corpo da requisição.
 POST /users/add
 ```
 
-### `/users/edit/<useremail>`
+### `/users/edit/<id>`
 
 Atualiza um usuário específico.
 
@@ -96,7 +96,7 @@ Atualiza um usuário específico.
 
 **Parâmetro:**
 
-* `useremail`: Email do usuário
+* `id`: id do usuário
 
 **Corpo da requisição:**
 
@@ -113,13 +113,13 @@ Atualiza um usuário específico.
 
 **Exemplo:**
 
-Atualiza o usuário com o email especificado com os dados especificados no corpo da requisição.
+Atualiza um usuário específico com os dados especificados no corpo da requisição.
 
 ```
 PUT /users/edit/jose@bugmail.com
 ```
 
-### `/users/delete/<useremail>`
+### `/users/delete/<id>`
 
 Exclui um usuário específico.
 
@@ -127,10 +127,10 @@ Exclui um usuário específico.
 
 **Parâmetro:**
 
-* `useremail`: Email do usuário
+* `id`: id do usuário
 
 **Exemplo:**
-Exclui o usuário com o email especificado.
+Exclui o usuário com o id especificado.
 
 ```
 DELETE /users/delete/jose@bugmail.com
