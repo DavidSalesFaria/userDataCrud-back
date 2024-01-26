@@ -8,7 +8,7 @@ import os
 load_dotenv(".env")
 
 app = Flask(__name__, template_folder="templates")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI2")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI1")
 
 # Inicia e configura o banco de dados
 db.init_app(app=app)

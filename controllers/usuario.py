@@ -19,7 +19,7 @@ def validate_email(email):
 app = Blueprint("usuario", __name__)
 
 @app.route("/")
-@app.route("/<id>")
+@app.route("/<int:id>")
 def index(id=None):
     # Check if id was provided
     if not id:
@@ -29,8 +29,8 @@ def index(id=None):
         result = [u.to_dict() for u in query]
     else:
         # Get a specific user by id
-        query = Usuario.query.where(Usuario.id == id)
-        result = query.first().to_dict()
+        query = Usuario.query.where(Usuario.id == id).first()
+        result = query.to_dict() if query else {}
     
     return Response(response=json.dumps({"status": "success", "data": result}), status=200, content_type="application/json")
 
