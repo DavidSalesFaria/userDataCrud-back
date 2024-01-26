@@ -107,8 +107,14 @@ def edit(id):
 
 @app.route("/delete/<id>", methods=["DELETE", "GET"])
 def delete(id):
-    usuario = Usuario.query.where(Usuario.id == id).first()
-    db.session.delete(usuario)
-    db.session.commit()
-    return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+    query = Usuario.query.where(Usuario.id == id)
+    usuario = query.first()
+
+    if usuario:
+        db.session.delete(usuario)
+        db.session.commit()
+        return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+        
+    else:
+        return Response(response=json.dumps({"status": "success", "data": {}}), status=200, content_type="application/json")
 
