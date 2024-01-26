@@ -90,9 +90,9 @@ def add():
 
 
 @app.route("/edit/<id>", methods=["PUT", "POST"])
-def edit(useremail):
+def edit(id):
     # Get a specific user by id
-    usuario = Usuario.query.where(Usuario.email == id).first()
+    usuario = Usuario.query.where(Usuario.id == id).first()
     data = request.get_json(force=True)  
     usuario.nome = data["nome"]
     usuario.sobrenome = data["sobrenome"]
@@ -107,7 +107,7 @@ def edit(useremail):
 
 @app.route("/delete/<id>", methods=["DELETE", "GET"])
 def delete(id):
-    usuario = Usuario.query.where(Usuario.email == id).first()
+    usuario = Usuario.query.where(Usuario.id == id).first()
     db.session.delete(usuario)
     db.session.commit()
     return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
