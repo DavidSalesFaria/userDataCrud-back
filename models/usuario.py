@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, date
 
 db = SQLAlchemy()
 
@@ -19,34 +20,63 @@ class Usuario(db.Model):
         self.dataDeAniversario = dataDeAniversario
         self.genero = genero
         
+    def copy(self):
+        copy = Usuario(
+            self.nome,
+            self.sobrenome,
+            self.email,
+            self.senha,
+            self.dataDeAniversario,
+            self.genero
+        )
+        copy.id = self.id
+        return copy
 
     def birthday_to_str(self):
-        """ Cast user birthday from datetime to string
+        """ attribute data_nascimento datetime -> str
         """
-        from datetime import datetime
-        self.dataDeAniversario = datetime.strftime(self.dataDeAniversario, "%Y-%m-%d")
+        if isinstance(self.dataDeAniversario, date):
+            self.dataDeAniversario = datetime.strftime(self.dataDeAniversario, "%Y-%m-%d")
+        
 
     def birthday_to_datetime(self):
-        """ Cast user birthday from string to datetime
+        """ attribute data_nascimento str -> datetime
         """
-        from datetime import datetime
-        self.dataDeAniversario = datetime.strptime(self.dataDeAniversario, "%Y-%m-%d")
-    
-    def to_dict(self, columns=[]):
-        # Verifica se foram informadas colunas para filtrar o retorno
-        self.birthday_to_str()
+        if isinstance(self.dataDeAniversario, str):
+            self.dataDeAniversario = datetime.strptime(self.dataDeAniversario, "%Y-%m-%d")
+          
 
+    def to_dict(self, columns=[]):
+
+        copy = self.copy()
+        copy.birthday_to_str()
+
+        # Verifica se foram informadas colunas para filtrar o retorno
         if not columns:
             return {
-                "id": self.id,
-                "nome": self.nome,
+                "id": copy.id,
+                "nome": copy.nome,
                 "sobrenome": self.sobrenome,
-                "email": self.email,
-                "senha": self.senha,
-                "dataDeAniversario": self.dataDeAniversario,
-                "genero": self.genero
+                "email": copy.email,
+                "senha": copy.senha,
+                "dataDeAniversario": copy.dataDeAniversario,
+                "genero": copy.genero
             }
         else:
-            return {col: getattr(self, col) for col in columns}
+            return {col: getattr(copy, col) for col in columns}
 
 
+# usu = Usuario(
+#             "David",
+#             "Shelton",
+#             "david@bugmail.com",
+#             "123",
+#             "2002-02-26",
+#             "masculino"
+#         )
+# usu.id = 4
+
+
+# usu_date = usu.birthday_to_datetime()
+# print(usu.to_dict())
+# print(usu_date.to_dict())

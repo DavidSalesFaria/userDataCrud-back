@@ -1,7 +1,8 @@
-from flask import Blueprint, Response, request
+from flask import Blueprint, Response, request, abort
 from models.usuario import db, Usuario
 import json
 import re
+from jsonschema import validate, ValidationError
 
 def validate_email(email):
   """Valida um endereço de email.
@@ -16,6 +17,32 @@ def validate_email(email):
   regex = re.compile(r'^[a-zA-Z0-9_\.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$')
   return regex.match(email) is not None
 
+user_data_schema = {
+        "type": "object",
+        "properties": {
+            "nome": {
+                "type": "string",
+            },
+            "sobrenome": {
+                "type": "string",
+            },
+            "email": {
+                "type": "string",
+            },
+             "senha": {
+                "type": "string",
+            },
+            "dataDeAniversario": {
+                "type": "string",
+            },
+            "genero": {
+                "type": "string",
+            },
+        },
+        "required": ["nome", "sobrenome", "email", "senha", "dataDeAniversario", "genero"],
+        "maxProperties": 6
+    }
+
 app = Blueprint("usuario", __name__)
 
 @app.route("/")
@@ -26,32 +53,40 @@ def index(id=None):
         # Is returned an iterator with all users
         query = Usuario.query.all()
         # Cast every object into dict
-        result = [u.to_dict() for u in query]
+        resp = [u.to_dict() for u in query]
     else:
         # Get a specific user by id
         query = Usuario.query.where(Usuario.id == id).first()
-        result = query.to_dict() if query else {}
+        resp = query.to_dict() if query else {}
     
-    return Response(response=json.dumps({"status": "success", "data": result}), status=200, content_type="application/json")
+    return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
 
 
 @app.route("/add", methods=["POST"])
 def add():
-    data = request.get_json(force=True)
-    usuario = Usuario(
-        data["nome"], 
-        data["sobrenome"],
-        data["email"],
-        data["senha"],
-        data["dataDeAniversario"],
-        data["genero"]
-        )
-    # Converte a data de aniversário do usuário para datetime
-    usuario.birthday_to_datetime()
-    db.session.add(usuario)
-    db.session.commit()
-    # Retorna a resposta em json
-    return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+    data: dict = request.get_json(force=True)
+
+    try:
+        validate(data, user_data_schema)
+
+        # usuario = Usuario(
+        #     data["nome"], 
+        #     data["sobrenome"],
+        #     data["email"],
+        #     data["senha"],
+        #     data["dataDeAniversario"],
+        #     data["genero"]
+        #     )
+
+        # usuario.birthday_to_datetime()
+        # # # Converte a data de aniversário do usuário para datetime
+        # db.session.add(usuario)
+        # db.session.commit()
+        # Retorna a resposta em json
+        return Response(response=json.dumps({"status": "success", "data": data}), status=200, content_type="application/json")
+    except ValidationError as e:
+
+        return Response(response=json.dumps({"status": "bad request", "message": e.message}), status=400, content_type="application/json")
 
 
 @app.route("/edit/<id>", methods=["PUT", "POST"])
