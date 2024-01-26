@@ -65,18 +65,3 @@ class Usuario(db.Model):
         else:
             return {col: getattr(copy, col) for col in columns}
 
-
-# usu = Usuario(
-#             "David",
-#             "Shelton",
-#             "david@bugmail.com",
-#             "123",
-#             "2002-02-26",
-#             "masculino"
-#         )
-# usu.id = 4
-
-
-# usu_date = usu.birthday_to_datetime()
-# print(usu.to_dict())
-# print(usu_date.to_dict())

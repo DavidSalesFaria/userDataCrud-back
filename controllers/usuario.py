@@ -69,19 +69,19 @@ def add():
     try:
         validate(data, user_data_schema)
 
-        # usuario = Usuario(
-        #     data["nome"], 
-        #     data["sobrenome"],
-        #     data["email"],
-        #     data["senha"],
-        #     data["dataDeAniversario"],
-        #     data["genero"]
-        #     )
+        usuario = Usuario(
+            data["nome"], 
+            data["sobrenome"],
+            data["email"],
+            data["senha"],
+            data["dataDeAniversario"],
+            data["genero"]
+            )
 
-        # usuario.birthday_to_datetime()
-        # # # Converte a data de aniversário do usuário para datetime
-        # db.session.add(usuario)
-        # db.session.commit()
+        usuario.birthday_to_datetime()
+        # # Converte a data de aniversário do usuário para datetime
+        db.session.add(usuario)
+        db.session.commit()
         # Retorna a resposta em json
         return Response(response=json.dumps({"status": "success", "data": data}), status=200, content_type="application/json")
     except ValidationError as e:
