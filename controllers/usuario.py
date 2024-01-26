@@ -19,12 +19,19 @@ def validate_email(email):
 app = Blueprint("usuario", __name__)
 
 @app.route("/")
-def index():
-    # Is returned an iterator with
-    #  all users
-    usuarios = Usuario.query.all()
-    # Cast every object into dict
-    result = [u.to_dict() for u in usuarios]
+@app.route("/<useremail>")
+def index(useremail=None):
+    #useremail = ""
+    if not useremail:
+        # Is returned an iterator with
+        #  all users
+        query = Usuario.query.all()
+        # Cast every object into dict
+        result = [u.to_dict() for u in query]
+    else:
+        query = Usuario.query.where(Usuario.email == useremail)
+        result = query.first().to_dict()
+    
     return Response(response=json.dumps({"status": "success", "data": result}), status=200, content_type="application/json")
 
 
