@@ -32,14 +32,14 @@ user_data_schema = {
              "senha": {
                 "type": "string",
             },
-            "dataDeAniversario": {
+            "data_nascimento": {
                 "type": "string",
             },
             "genero": {
                 "type": "string",
             },
         },
-        "required": ["nome", "sobrenome", "email", "senha", "dataDeAniversario", "genero"],
+        "required": ["nome", "sobrenome", "email", "senha", "data_nascimento", "genero"],
         "maxProperties": 6
     }
 
