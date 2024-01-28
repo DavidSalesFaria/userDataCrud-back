@@ -1,5 +1,5 @@
 from flask import Blueprint, Response, request, abort
-from models.usuario import db, Usuario
+from models.usuario import db, Users
 import json
 import re
 from jsonschema import validate, ValidationError
@@ -43,7 +43,7 @@ user_data_schema = {
         "maxProperties": 6
     }
 
-app = Blueprint("usuario", __name__)
+app = Blueprint("users", __name__)
 
 @app.route("/")
 @app.route("/<int:id>")
@@ -51,12 +51,12 @@ def index(id=None):
     # Check if id was provided
     if not id:
         # Is returned an iterator with all users
-        query = Usuario.query.all()
+        query = Users.query.all()
         # Cast every object into dict
         resp = [u.to_dict() for u in query]
     else:
         # Get a specific user by id
-        query = Usuario.query.where(Usuario.id == id).first()
+        query = Users.query.where(Users.id == id).first()
         resp = query.to_dict() if query else {}
     
     return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
@@ -69,7 +69,7 @@ def add():
     try:
         validate(data, user_data_schema)
 
-        usuario = Usuario(
+        usuario = Users(
             data["nome"], 
             data["sobrenome"],
             data["email"],
@@ -92,7 +92,7 @@ def add():
 @app.route("/edit/<id>", methods=["PUT", "POST"])
 def edit(id):
     # Get a specific user by id
-    usuario = Usuario.query.where(Usuario.id == id).first()
+    usuario = Users.query.where(Users.id == id).first()
     data = request.get_json(force=True)  
     usuario.nome = data["nome"]
     usuario.sobrenome = data["sobrenome"]
@@ -107,7 +107,7 @@ def edit(id):
 
 @app.route("/delete/<id>", methods=["DELETE", "GET"])
 def delete(id):
-    query = Usuario.query.where(Usuario.id == id)
+    query = Users.query.where(Users.id == id)
     usuario = query.first()
 
     if usuario:

@@ -3,30 +3,30 @@ from datetime import datetime, date
 
 db = SQLAlchemy()
 
-class Usuario(db.Model):
+class Users(db.Model):
     id = db.Column("id", db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column("nome", db.String(150))
     sobrenome = db.Column("sobrenome", db.String(150))
     email = db.Column("email", db.String(150))
     senha = db.Column("senha", db.String(150))
-    dataDeAniversario = db.Column("data_de_aniversario", db.Date)
+    data_nascimento = db.Column("data_nascimento", db.Date)
     genero = db.Column("genero", db.String(30))
 
-    def __init__(self, nome, sobrenome, email, senha, dataDeAniversario, genero):
+    def __init__(self, nome, sobrenome, email, senha, data_nascimento, genero):
         self.nome = nome
         self.sobrenome = sobrenome
         self.email = email
         self.senha = senha
-        self.dataDeAniversario = dataDeAniversario
+        self.data_nascimento = data_nascimento
         self.genero = genero
         
     def copy(self):
-        copy = Usuario(
+        copy = Users(
             self.nome,
             self.sobrenome,
             self.email,
             self.senha,
-            self.dataDeAniversario,
+            self.data_nascimento,
             self.genero
         )
         copy.id = self.id
@@ -35,15 +35,15 @@ class Usuario(db.Model):
     def birthday_to_str(self):
         """ attribute data_nascimento datetime -> str
         """
-        if isinstance(self.dataDeAniversario, date):
-            self.dataDeAniversario = datetime.strftime(self.dataDeAniversario, "%Y-%m-%d")
+        if isinstance(self.data_nascimento, date):
+            self.data_nascimento = datetime.strftime(self.data_nascimento, "%Y-%m-%d")
         
 
     def birthday_to_datetime(self):
         """ attribute data_nascimento str -> datetime
         """
-        if isinstance(self.dataDeAniversario, str):
-            self.dataDeAniversario = datetime.strptime(self.dataDeAniversario, "%Y-%m-%d")
+        if isinstance(self.data_nascimento, str):
+            self.data_nascimento = datetime.strptime(self.data_nascimento, "%Y-%m-%d")
           
 
     def to_dict(self, columns=[]):
@@ -59,7 +59,7 @@ class Usuario(db.Model):
                 "sobrenome": self.sobrenome,
                 "email": copy.email,
                 "senha": copy.senha,
-                "dataDeAniversario": copy.dataDeAniversario,
+                "data_nascimento": copy.data_nascimento,
                 "genero": copy.genero
             }
         else:
