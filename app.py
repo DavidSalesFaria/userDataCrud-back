@@ -16,7 +16,7 @@ with app.test_request_context():
         db.create_all()
 
 # Register the usuario's blueprint
-app.register_blueprint(usuario_controller, url_prefix="/usuario/")
+app.register_blueprint(usuario_controller, url_prefix="/users/")
 
 
 if __name__ == "__main__":
