@@ -98,7 +98,7 @@ def edit(id):
     usuario.sobrenome = data["sobrenome"]
     usuario.email = data["email"]
     usuario.senha = data["senha"]
-    usuario.data_nascimento = data["data_nacimento"]
+    usuario.data_nascimento = data["data_nascimento"]
     usuario.genero = data["genero"]
     usuario.birthday_to_datetime()
     db.session.commit()
