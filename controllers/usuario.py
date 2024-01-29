@@ -3,6 +3,10 @@ from models.usuario import db, Users
 import json
 import re
 from jsonschema import validate, ValidationError
+import jwt # lib for create tokens
+from functools import wraps
+import os
+
 
 def validate_email(email):
   """Valida um endereço de email.
@@ -16,6 +20,27 @@ def validate_email(email):
 
   regex = re.compile(r'^[a-zA-Z0-9_\.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$')
   return regex.match(email) is not None
+
+# Decorator that require token to access route
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        app_secret_key = os.getenv("APP_SECRET_KEY")
+        token = request.args.get("token")
+
+        # Check if there is not a token
+        if not token:
+            return Response(response=json.dumps({"status": "Unauthorized", "message": "Token is required"}), status=401, content_type="application/json")
+        
+        # Try decode token
+        try:
+            data = jwt.decode(token, app_secret_key, algorithms=["HS256"])
+        except:
+            return Response(response=json.dumps({"status": "Forbidden", "message": "Token is invalid"}), status=403, content_type="application/json")
+
+        return f(*args, **kwargs)
+    return decorated
+
 
 user_data_schema = {
         "type": "object",
@@ -43,10 +68,14 @@ user_data_schema = {
         "maxProperties": 6
     }
 
-app = Blueprint("users", __name__)
+blue = Blueprint("users", __name__)
 
-@app.route("/")
-@app.route("/<int:id>")
+
+
+
+@blue.route("/")
+@blue.route("/<int:id>")
+#@token_required
 def index(id=None):
     # Check if id was provided
     if not id:
@@ -62,11 +91,15 @@ def index(id=None):
     return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
 
 
-@app.route("/add", methods=["POST"])
+
+@blue.route("/add", methods=["POST"])
+@token_required
 def add():
     data: dict = request.get_json(force=True)
 
+    # Try add user
     try:
+        # Validate json
         validate(data, user_data_schema)
 
         usuario = Users(
@@ -78,38 +111,56 @@ def add():
             data["genero"]
             )
 
+        # user's birthday str -> datetime
         usuario.birthday_to_datetime()
-        # # Converte a data de aniversário do usuário para datetime
+
         db.session.add(usuario)
         db.session.commit()
-        # Retorna a resposta em json
-        return Response(response=json.dumps({"status": "success", "data": data}), status=200, content_type="application/json")
-    except ValidationError as e:
 
+        return Response(response=json.dumps({"status": "success", "data": data}), status=200, content_type="application/json")
+
+    except ValidationError as e:
         return Response(response=json.dumps({"status": "bad request", "message": e.message}), status=400, content_type="application/json")
 
 
-@app.route("/edit/<id>", methods=["PUT", "POST"])
+@blue.route("/edit/<id>", methods=["PUT", "POST"])
+@token_required
 def edit(id):
     # Get a specific user by id
     usuario = Users.query.where(Users.id == id).first()
-    data = request.get_json(force=True)  
-    usuario.nome = data["nome"]
-    usuario.sobrenome = data["sobrenome"]
-    usuario.email = data["email"]
-    usuario.senha = data["senha"]
-    usuario.data_nascimento = data["data_nascimento"]
-    usuario.genero = data["genero"]
-    usuario.birthday_to_datetime()
-    db.session.commit()
-    return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+    data = request.get_json(force=True)
 
+    # Try edit user
+    try:
+        # Validate json
+        validate(data, user_data_schema)
 
-@app.route("/delete/<id>", methods=["DELETE", "GET"])
+        usuario.nome = data["nome"]
+        usuario.sobrenome = data["sobrenome"]
+        usuario.email = data["email"]
+        usuario.senha = data["senha"]
+        usuario.data_nascimento = data["data_nascimento"]
+        usuario.genero = data["genero"]
+
+        # user's birthday str -> datetime
+        usuario.birthday_to_datetime()
+
+        db.session.commit()
+
+        return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+
+    except ValidationError as e:
+        return Response(response=json.dumps({"status": "bad request", "message": e.message}), status=400, content_type="application/json")
+
+    
+
+@blue.route("/delete/<id>", methods=["DELETE", "GET"])
+@token_required
 def delete(id):
     query = Users.query.where(Users.id == id)
     usuario = query.first()
 
+    # Check if there is a user found
     if usuario:
         db.session.delete(usuario)
         db.session.commit()
