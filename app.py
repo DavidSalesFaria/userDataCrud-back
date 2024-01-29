@@ -35,7 +35,7 @@ def login():
             "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
             }, key=app.config["SECRET_KEY"])
 
-        return Response(response=json.dumps({"status": "success", "token": token, "token_dec": jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])}), status=200, content_type="application/json")
+        return Response(response=json.dumps({"status": "success", "token": token}), status=200, content_type="application/json")
     else:
         return Response(response=json.dumps({"status": "bad request", "message": "Login Required"}), status=401, content_type="application/json")
 

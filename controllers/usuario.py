@@ -75,7 +75,7 @@ blue = Blueprint("users", __name__)
 
 @blue.route("/")
 @blue.route("/<int:id>")
-#@token_required
+@token_required
 def index(id=None):
     # Check if id was provided
     if not id:
