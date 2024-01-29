@@ -7,18 +7,21 @@ class Users(db.Model):
     id = db.Column("id", db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column("nome", db.String(150))
     sobrenome = db.Column("sobrenome", db.String(150))
-    email = db.Column("email", db.String(150))
-    senha = db.Column("senha", db.String(150))
+    email = db.Column("email", db.String(150), unique=True)
+    senha = db.Column("senha", db.String(200))
     data_nascimento = db.Column("data_nascimento", db.Date)
     genero = db.Column("genero", db.String(30))
+    admin = db.Column("admin", db.Boolean)
 
-    def __init__(self, nome, sobrenome, email, senha, data_nascimento, genero):
+
+    def __init__(self, nome, sobrenome, email, senha, data_nascimento, genero, admin):
         self.nome = nome
         self.sobrenome = sobrenome
         self.email = email
         self.senha = senha
         self.data_nascimento = data_nascimento
         self.genero = genero
+        self.admin = admin
         
     def copy(self):
         copy = Users(
@@ -27,7 +30,8 @@ class Users(db.Model):
             self.email,
             self.senha,
             self.data_nascimento,
-            self.genero
+            self.genero,
+            self.admin
         )
         copy.id = self.id
         return copy
@@ -60,7 +64,8 @@ class Users(db.Model):
                 "email": copy.email,
                 "senha": copy.senha,
                 "data_nascimento": copy.data_nascimento,
-                "genero": copy.genero
+                "genero": copy.genero,
+                "admin": self.admin
             }
         else:
             return {col: getattr(copy, col) for col in columns}

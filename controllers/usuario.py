@@ -6,6 +6,7 @@ from jsonschema import validate, ValidationError
 import jwt # lib for create tokens
 from functools import wraps
 import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 def validate_email(email):
@@ -26,7 +27,11 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         app_secret_key = os.getenv("APP_SECRET_KEY")
-        token = request.args.get("token")
+
+        token = None
+
+        if "token" in request.headers:
+            token = request.headers["token"]
 
         # Check if there is not a token
         if not token:
@@ -35,10 +40,11 @@ def token_required(f):
         # Try decode token
         try:
             data = jwt.decode(token, app_secret_key, algorithms=["HS256"])
+            current_user = Users.query.filter_by(email=data["username"]).first()
         except:
-            return Response(response=json.dumps({"status": "Forbidden", "message": "Token is invalid"}), status=403, content_type="application/json")
+            return Response(response=json.dumps({"status": "Forbidden", "message": "Token is invalid", "data": jwt.decode(token, app_secret_key, algorithms=["HS256"])}), status=403, content_type="application/json")
 
-        return f(*args, **kwargs)
+        return f(current_user, *args, **kwargs)
     return decorated
 
 
@@ -71,12 +77,14 @@ user_data_schema = {
 blue = Blueprint("users", __name__)
 
 
-
-
 @blue.route("/")
 @blue.route("/<int:id>")
 @token_required
-def index(id=None):
+def index(current_user, id=None):
+
+    if not current_user.admin:
+        return Response(response=json.dumps({"status": "Unsautorized", "message": "Cannot perform that function"}), status=401, content_type="application/json")
+
     # Check if id was provided
     if not id:
         # Is returned an iterator with all users
@@ -91,9 +99,8 @@ def index(id=None):
     return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
 
 
-
 @blue.route("/add", methods=["POST"])
-@token_required
+# @token_required
 def add():
     data: dict = request.get_json(force=True)
 
@@ -106,14 +113,14 @@ def add():
             data["nome"], 
             data["sobrenome"],
             data["email"],
-            data["senha"],
+            generate_password_hash(data["senha"]),
             data["data_nascimento"],
-            data["genero"]
+            data["genero"],
+            admin=False
             )
 
         # user's birthday str -> datetime
         usuario.birthday_to_datetime()
-
         db.session.add(usuario)
         db.session.commit()
 
@@ -138,7 +145,7 @@ def edit(id):
         usuario.nome = data["nome"]
         usuario.sobrenome = data["sobrenome"]
         usuario.email = data["email"]
-        usuario.senha = data["senha"]
+        usuario.senha = generate_password_hash(data["senha"])
         usuario.data_nascimento = data["data_nascimento"]
         usuario.genero = data["genero"]
 
@@ -154,18 +161,28 @@ def edit(id):
 
     
 
-@blue.route("/delete/<id>", methods=["DELETE", "GET"])
-@token_required
-def delete(id):
-    query = Users.query.where(Users.id == id)
-    usuario = query.first()
+# @blue.route("/delete/<id>", methods=["DELETE", "GET"])
+# @token_required
+# def delete(id):
+#     query = Users.query.where(Users.id == id)
+#     usuario = query.first()
 
-    # Check if there is a user found
-    if usuario:
-        db.session.delete(usuario)
-        db.session.commit()
-        return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+#     # Check if there is a user found
+#     if usuario:
+#         db.session.delete(usuario)
+#         db.session.commit()
+#         return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
         
-    else:
-        return Response(response=json.dumps({"status": "success", "data": {}}), status=200, content_type="application/json")
+#     else:
+#         return Response(response=json.dumps({"status": "success", "data": {}}), status=200, content_type="application/json")
 
+
+@blue.route("/promote_user/<id>", methods=["POST"])
+def promote_user(id):
+    user = Users.query.filter_by(id=id).first()
+    if not user:
+        return Response(response=json.dumps({"status": "bad request", "message": "User not found!"}), status=400, content_type="application/json")
+
+    user.admin = True
+    db.session.commit()
+    return Response(response=json.dumps({"status": "sucess", "message": f"User {user.nome} promoted!"}), status=200, content_type="application/json")
