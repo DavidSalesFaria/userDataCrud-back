@@ -24,13 +24,26 @@ def validate_email(email):
   return regex.match(email) is not None
 
 
+def admin_required(f):
+    """Add admin=True kwarg in @token_required decorator, then
+    admin token is required to that decorator
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        return f(*args, **kwargs, admin=True)
+    return decorated
+
+
 # Decorator that require token to access route
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        app_secret_key = os.getenv("APP_SECRET_KEY")
+        # Get secret key from enviroment
+        app_secret_key= os.getenv("APP_SECRET_KEY")
 
         token = None
+        admin = False
+        current_user = None  
 
         # Check if token is in headers
         if "token" in request.headers:
@@ -47,7 +60,17 @@ def token_required(f):
         except:
             return Response(response=json.dumps({"status": "Forbidden", "message": "Token is invalid"}), status=403, content_type="application/json")
 
-        return f(current_user, *args, **kwargs)
+        # Check if there is a kwarg with name "admin"
+        if "admin" in kwargs:
+            admin = kwargs.pop("admin") 
+
+        # If admin token is required
+        if admin:
+            if  not current_user.admin:
+                return Response(response=json.dumps({"status": "Unauthorized", "message": "Admin is required"}), status=401, content_type="application/json")
+
+        return f(*args, **kwargs)
+
     return decorated
 
 
@@ -81,12 +104,9 @@ blue = Blueprint("users", __name__)
 
 
 @blue.route("/")
-# @token_required
-def get_all_users(current_user):
-    # Check if current user is not admin
-    if not current_user.admin:
-        return Response(response=json.dumps({"status": "Unsautorized", "message": "Cannot perform that function"}), status=401, content_type="application/json")
-
+@admin_required
+@token_required
+def get_all_users():
     # Is returned an iterator with all users
     query = Users.query.all()
     # Cast every object into dict
@@ -97,11 +117,7 @@ def get_all_users(current_user):
 
 @blue.route("/<int:id>")
 @token_required
-def get_one_ser(current_user, id=None):
-
-    # Check if current user is not admin
-    if not current_user.admin:
-        return Response(response=json.dumps({"status": "Unsautorized", "message": "Cannot perform that function"}), status=401, content_type="application/json")
+def get_one_ser(id=None):
 
     # Get a specific user by id
     query = Users.query.where(Users.id == id).first()
