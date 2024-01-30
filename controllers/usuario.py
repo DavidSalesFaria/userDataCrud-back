@@ -6,21 +6,23 @@ from jsonschema import validate, ValidationError
 import jwt # lib for create tokens
 from functools import wraps
 import os
+# Generate and check hash password
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 def validate_email(email):
-  """Valida um endereço de email.
+  """Validate a email address
 
   Args:
-    email: O endereço de email a ser validado.
+    email: User email address
 
   Returns:
-    True se o endereço de email for válido, False se for inválido.
+    True if email is valid, False else.
   """
 
   regex = re.compile(r'^[a-zA-Z0-9_\.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$')
   return regex.match(email) is not None
+
 
 # Decorator that require token to access route
 def token_required(f):
@@ -30,6 +32,7 @@ def token_required(f):
 
         token = None
 
+        # Check if token is in headers
         if "token" in request.headers:
             token = request.headers["token"]
 
@@ -42,7 +45,7 @@ def token_required(f):
             data = jwt.decode(token, app_secret_key, algorithms=["HS256"])
             current_user = Users.query.filter_by(email=data["username"]).first()
         except:
-            return Response(response=json.dumps({"status": "Forbidden", "message": "Token is invalid", "data": jwt.decode(token, app_secret_key, algorithms=["HS256"])}), status=403, content_type="application/json")
+            return Response(response=json.dumps({"status": "Forbidden", "message": "Token is invalid"}), status=403, content_type="application/json")
 
         return f(current_user, *args, **kwargs)
     return decorated
@@ -78,23 +81,31 @@ blue = Blueprint("users", __name__)
 
 
 @blue.route("/")
-@blue.route("/<int:id>")
-@token_required
-def index(current_user, id=None):
-
+# @token_required
+def get_all_users(current_user):
+    # Check if current user is not admin
     if not current_user.admin:
         return Response(response=json.dumps({"status": "Unsautorized", "message": "Cannot perform that function"}), status=401, content_type="application/json")
 
-    # Check if id was provided
-    if not id:
-        # Is returned an iterator with all users
-        query = Users.query.all()
-        # Cast every object into dict
-        resp = [u.to_dict() for u in query]
-    else:
-        # Get a specific user by id
-        query = Users.query.where(Users.id == id).first()
-        resp = query.to_dict() if query else {}
+    # Is returned an iterator with all users
+    query = Users.query.all()
+    # Cast every object into dict
+    resp = [u.to_dict() for u in query]
+    
+    return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
+
+
+@blue.route("/<int:id>")
+@token_required
+def get_one_ser(current_user, id=None):
+
+    # Check if current user is not admin
+    if not current_user.admin:
+        return Response(response=json.dumps({"status": "Unsautorized", "message": "Cannot perform that function"}), status=401, content_type="application/json")
+
+    # Get a specific user by id
+    query = Users.query.where(Users.id == id).first()
+    resp = query.to_dict() if query else {}
     
     return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
 
@@ -161,20 +172,25 @@ def edit(id):
 
     
 
-# @blue.route("/delete/<id>", methods=["DELETE", "GET"])
-# @token_required
-# def delete(id):
-#     query = Users.query.where(Users.id == id)
-#     usuario = query.first()
+@blue.route("/delete/<id>", methods=["DELETE", "GET"])
+@token_required
+def delete(current_user, id):
 
-#     # Check if there is a user found
-#     if usuario:
-#         db.session.delete(usuario)
-#         db.session.commit()
-#         return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
+    # Check if current user is not admin
+    if not current_user.admin:
+        return Response(response=json.dumps({"status": "Unsautorized", "message": "Cannot perform that function"}), status=401, content_type="application/json")
+
+    query = Users.query.where(Users.id == id)
+    usuario = query.first()
+
+    # Check if there is a user found
+    if usuario:
+        db.session.delete(usuario)
+        db.session.commit()
+        return Response(response=json.dumps({"status": "success", "data": usuario.to_dict()}), status=200, content_type="application/json")
         
-#     else:
-#         return Response(response=json.dumps({"status": "success", "data": {}}), status=200, content_type="application/json")
+    else:
+        return Response(response=json.dumps({"status": "success", "data": {}}), status=200, content_type="application/json")
 
 
 @blue.route("/promote_user/<id>", methods=["POST"])
