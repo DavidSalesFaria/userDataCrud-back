@@ -22,6 +22,10 @@ class Users(db.Model):
         self.data_nascimento = data_nascimento
         self.genero = genero
         self.admin = admin
+
+    def exists(self):
+        user = self.query.filter_by(email = self.email).first()
+        return bool(user)
         
     def copy(self):
         copy = Users(

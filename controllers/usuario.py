@@ -1,4 +1,4 @@
-from flask import Blueprint, Response, request, abort
+from flask import Blueprint, Response, request
 from models.usuario import db, Users
 import json
 import re
@@ -7,7 +7,7 @@ import jwt # lib for create tokens
 from functools import wraps
 import os
 # Generate and check hash password
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
 
 def validate_email(email):
@@ -117,7 +117,7 @@ def get_all_users():
 
 @blue.route("/<int:id>")
 @token_required
-def get_one_ser(id=None):
+def get_one_ser(id):
 
     # Get a specific user by id
     query = Users.query.where(Users.id == id).first()
@@ -126,7 +126,7 @@ def get_one_ser(id=None):
     return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
 
 
-@blue.route("/add", methods=["POST"])
+@blue.route("/", methods=["POST"])
 # @token_required
 def add():
     data: dict = request.get_json(force=True)
@@ -136,18 +136,24 @@ def add():
         # Validate json
         validate(data, user_data_schema)
 
+
         usuario = Users(
             data["nome"], 
-            data["sobrenome"],
+            data["sobrenome"] if data["sobrenome"] else None,
             data["email"],
             generate_password_hash(data["senha"]),
-            data["data_nascimento"],
-            data["genero"],
+            data["data_nascimento"] if data["data_nascimento"] else None,
+            data["genero"] if data["genero"] else None,
             admin=False
             )
+        
+        if usuario.exists():
+            return Response(response=json.dumps({"status": "conflict", "message": "The user already exists in the database"}), status=409, content_type="application/json")
 
-        # user's birthday str -> datetime
-        usuario.birthday_to_datetime()
+        if usuario.data_nascimento:
+            # user's birthday str -> datetime
+            usuario.birthday_to_datetime()
+
         db.session.add(usuario)
         db.session.commit()
 
@@ -157,7 +163,8 @@ def add():
         return Response(response=json.dumps({"status": "bad request", "message": e.message}), status=400, content_type="application/json")
 
 
-@blue.route("/edit/<id>", methods=["PUT", "POST"])
+@blue.route("/<id>", methods=["PUT", "POST"])
+@admin_required
 @token_required
 def edit(id):
     # Get a specific user by id
@@ -188,7 +195,8 @@ def edit(id):
 
     
 
-@blue.route("/delete/<id>", methods=["DELETE", "GET"])
+@blue.route("/<id>", methods=["DELETE"])
+@admin_required
 @token_required
 def delete(current_user, id):
 

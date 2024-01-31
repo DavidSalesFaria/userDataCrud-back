@@ -6,13 +6,13 @@ from dotenv import load_dotenv
 import os
 import jwt # lib for create tokens
 import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 
 # Load the enviroment variables
 load_dotenv(".env")
 
 app = Flask(__name__, template_folder="templates")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI1")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI_MYSQL")
 app.config["SECRET_KEY"] = os.getenv("APP_SECRET_KEY")
 
 # Inicia e configura o banco de dados
