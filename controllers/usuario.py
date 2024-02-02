@@ -7,7 +7,8 @@ import jwt # lib for create tokens
 from functools import wraps
 import os
 # Generate and check hash password
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+import datetime
 
 
 def validate_email(email):
@@ -101,6 +102,34 @@ user_data_schema = {
     }
 
 blue = Blueprint("users", __name__)
+
+
+@blue.route("/login")
+def login():
+
+    auth = request.authorization
+
+    # Check if there is authorization
+    if not auth or not auth.get("username") or not auth.get("password"):
+        return Response(response=json.dumps({"status": "Unautorized", "messsage": "Login is required!}"}), status=401, content_type="application/json")
+
+    user = Users.query.filter_by(email=auth.get("username")).first()
+
+    # Check if user exists
+    if not user:
+        return Response(response=json.dumps({"status": "Unautorized", "messsage": "User not found!"}), status=401, content_type="application/json")
+
+    # Check user's password
+    if check_password_hash(user.senha, auth.get("password")):
+        # create a token
+        token = jwt.encode({
+            "username": auth.get("username"), 
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+            }, key=os.getenv("APP_SECRET_KEY"))
+
+        return Response(response=json.dumps({"status": "success", "token": token}), status=200, content_type="application/json")
+    
+    return Response(response=json.dumps({"status": "Unautorized", "messsage": "Invalid password!"}), status=401, content_type="application/json")
 
 
 @blue.route("/")

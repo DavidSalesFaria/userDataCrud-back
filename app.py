@@ -24,33 +24,6 @@ with app.test_request_context():
 app.register_blueprint(usuario_controller, url_prefix="/users/")
 
 
-@app.route("/login")
-def login():
-
-    auth = request.authorization
-
-    # Check if there is authorization
-    if not auth or not auth.get("username") or not auth.get("password"):
-        return Response(response=json.dumps({"status": "Unautorized", "messsage": "Login is required!}"}), status=401, content_type="application/json")
-
-    user = Users.query.filter_by(email=auth.get("username")).first()
-
-    # Check if user exists
-    if not user:
-        return Response(response=json.dumps({"status": "Unautorized", "messsage": "User not found!"}), status=401, content_type="application/json")
-
-    # Check user's password
-    if check_password_hash(user.senha, auth.get("password")):
-        # create a token
-        token = jwt.encode({
-            "username": auth.get("username"), 
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
-            }, key=app.config["SECRET_KEY"])
-
-        return Response(response=json.dumps({"status": "success", "token": token}), status=200, content_type="application/json")
-    
-    return Response(response=json.dumps({"status": "Unautorized", "messsage": "Invalid password!"}), status=401, content_type="application/json")
-
 if __name__ == "__main__":
     app.run(debug=True)
     
