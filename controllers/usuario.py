@@ -107,23 +107,43 @@ blue = Blueprint("users", __name__)
 @admin_required
 @token_required
 def get_all_users():
+    status = {
+        "name": "no content",
+        "code": 204
+    }
+
     # Is returned an iterator with all users
     query = Users.query.all()
     # Cast every object into dict
     resp = [u.to_dict() for u in query]
     
-    return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
+    if not resp:
+        status["name"] = "sucess"
+        status["code"] = 200
+
+    return Response(response=json.dumps({"status": status["name"], "data": resp}), status=status["code"], content_type="application/json")
 
 
 @blue.route("/<int:id>")
 @token_required
 def get_one_ser(id):
+    status = {
+        "name": "no content",
+        "code": 204
+    }
+
+    resp = {}
 
     # Get a specific user by id
-    query = Users.query.where(Users.id == id).first()
-    resp = query.to_dict() if query else {}
-    
-    return Response(response=json.dumps({"status": "success", "data": resp}), status=200, content_type="application/json")
+    user = Users.query.where(Users.id == id).first()
+
+    if user:
+        resp = user.to_dict()
+        status["name"] = "sucess"
+        status["code"] = 200
+        
+
+    return Response(response=json.dumps({"status": status["name"], "data": resp}), status=status["code"], content_type="application/json")
 
 
 @blue.route("/", methods=["POST"])
@@ -135,7 +155,6 @@ def add():
     try:
         # Validate json
         validate(data, user_data_schema)
-
 
         usuario = Users(
             data["nome"], 
@@ -150,6 +169,7 @@ def add():
         if usuario.exists():
             return Response(response=json.dumps({"status": "conflict", "message": "The user already exists in the database"}), status=409, content_type="application/json")
 
+        # Check if user's birthday was provided
         if usuario.data_nascimento:
             # user's birthday str -> datetime
             usuario.birthday_to_datetime()
