@@ -146,9 +146,10 @@ def get_all_users():
     # Cast every object into dict
     resp = [u.to_dict() for u in query]
     
-    if not resp:
+    if resp:
         status["name"] = "sucess"
         status["code"] = 200
+
 
     return Response(response=json.dumps({"status": status["name"], "data": resp}), status=status["code"], content_type="application/json")
 
