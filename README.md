@@ -24,44 +24,32 @@ Esta API fornece endpoints para gerenciar dados de usuário, incluindo nome, sob
 **Deploy Website:** Render
 
 
-## Blueprint
-### `/users`
-
-## Endpoints
-
-### `/`
+## `/users/` - Methotd [GET]
 
 Retorna uma lista de todos os usuários.
-
-**Método:** GET
-
-**Parâmetro:**
-* `id` (opcional): id do usuário
 
 **Exemplos:**
-
-Retorna uma lista de todos os usuários.
 
 ```
 GET /users/
 ```
 
-### `/<id>`
+## `/users/<id>` - Methotd [GET]
 
-Retorna um usuário específico.
-
-**Método:** GET
+Retorna os dados de um usuário específico.
 
 **Parâmetro:**
+
 * `id`: id do usuário
 
-**Exemplo:**
+**Exemplos:**
 
 ```
-GET /users/jose@bugmail.com
+GET /users/2
 ```
 
-### `/users/add`
+## `/users/`  - Methotd [POST]
+
 
 Cria um novo usuário.
 
@@ -82,17 +70,13 @@ Cria um novo usuário.
 
 **Exemplo:**
 
-Cria um usuário com os dados especificados no corpo da requisição.
-
 ```
 POST /users/add
 ```
 
-### `/users/edit/<id>`
+## `/users/<id>`  - Methotd [PUT]
 
 Atualiza um usuário específico.
-
-**Método:** PUT
 
 **Parâmetro:**
 
@@ -113,31 +97,24 @@ Atualiza um usuário específico.
 
 **Exemplo:**
 
-Atualiza um usuário específico com os dados especificados no corpo da requisição.
-
 ```
-PUT /users/edit/jose@bugmail.com
+PUT /users/2
 ```
 
-### `/users/delete/<id>`
+## `/users/<id>`  - Methotd [DELETE]
 
 Exclui um usuário específico.
-
-**Método:** DELETE
 
 **Parâmetro:**
 
 * `id`: id do usuário
 
 **Exemplo:**
-Exclui o usuário com o id especificado.
 
 ```
-DELETE /users/delete/jose@bugmail.com
+DELETE /users/2
 ```
-
 
 ## Autor
 
 [David Shelton]
-
